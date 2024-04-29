@@ -13,6 +13,7 @@ import cv2
 import random
 import time 
 from balloon import Balloon 
+from balloonbundle import Balloonbundle
 
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
@@ -32,9 +33,8 @@ class Game:
         self.score = 0
         self.level = 1  
         # TODO: Initialize the enemy
-        self.green_balloon= Balloon(GREEN)
-        self.red_balloon = Balloon(RED)
 
+        self.balloon_bundle = Balloonbundle(4)
         # Create the hand detector
         base_options = BaseOptions(model_asset_path='data/hand_landmarker.task')
         options = HandLandmarkerOptions(base_options=base_options,
@@ -88,7 +88,7 @@ class Game:
         x_intercept = finger_x < balloon.x + 10 and finger_x > balloon.x - 10
         y_intercept = finger_y < balloon.y + 10 and finger_y > balloon.y - 10
         if(x_intercept and y_intercept): 
-            balloon.respawn()
+            # balloon.respawn()
             self.score += 1
             self.temp = True
         
@@ -164,19 +164,6 @@ class Game:
                 curr_time = time.time()    
                 print(curr_time)
                 break
-
-            # if(self.level == 1): 
-            #     # while there are less than 10 enemies 
-            #     while self.green_enemy.count < 10: 
-            #         # respawn every 5 seconds
-            #         self.green_enemy.respawn()
-            #     # break
-
-            # if(self.level == 3):
-            #     if self.green_enemy
-
-            # Draw the hand landmarks
-            # self.draw_landmarks_on_hand(image, results)
 
             # Change the color of the frame back
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
