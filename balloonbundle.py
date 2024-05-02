@@ -17,11 +17,18 @@ class Balloonbundle:
         self.screen_height = screen_height
         self.num_balloons = num_balloons
         self.balloons = []
+        self.speed = 30
         self.initialize_balloons()
 
     def initialize_balloons(self): 
         for i in range(self.num_balloons): 
             self.balloons.append(Balloon(Color.RED))
+
+    # def slow_speed():
+    #     # if balloon popped
+
+    
+
 
     def draw(self, image):
         for balloon in self.balloons:

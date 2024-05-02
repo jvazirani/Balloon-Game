@@ -85,6 +85,7 @@ class Game:
             image (_type_): The image to draw on
 
         """
+        # is this right
         x_intercept = finger_x < balloon.x + 10 and finger_x > balloon.x - 10
         y_intercept = finger_y < balloon.y + 10 and finger_y > balloon.y - 10
         if(x_intercept and y_intercept): 
@@ -117,14 +118,16 @@ class Game:
             pixelCoord = DrawingUtil._normalized_to_pixel_coordinates(finger.x, finger.y, imageWidth, imageHeight)
             pixelCoord_thumb = DrawingUtil._normalized_to_pixel_coordinates(thumb.x, thumb.y, imageWidth, imageHeight)
 
+            
             if pixelCoord:
-                #Draw the circle 
-                cv2.circle(image, (pixelCoord[0], pixelCoord[1]), 25, GREEN, 5)
-                self.check_balloon_intercept(pixelCoord[0], pixelCoord[1], self.green_balloon, image)
+                for balloon in self.balloon_bundle.balloons:
+                    cv2.circle(image, (balloon.x, balloon.y), 25, GREEN, 5)
+                    for balloon in self.balloon_bundle.balloons:
+                        self.check_balloon_intercept(balloon.x, balloon.y, balloon, image)
 
-            if pixelCoord_thumb:
-                cv2.circle(image, (pixelCoord_thumb[0], pixelCoord_thumb[1]), 25, RED, 5)
-                self.check_balloon_intercept(pixelCoord_thumb[0], pixelCoord_thumb[1], self.red_balloon, image)
+            # if pixelCoord_thumb:
+            #     cv2.circle(image, (pixelCoord_thumb[0], pixelCoord_thumb[1]), 25, RED, 5)
+            #     self.check_balloon_intercept(pixelCoord_thumb[0], pixelCoord_thumb[1], self.red_balloon, image)
 
             # elif (finger_intersect and thumb_intersect):
             #     self.green_enemy.respawn()
@@ -149,9 +152,7 @@ class Game:
             image = cv2.flip(image, 1)
 
             # Draw the enemy on the image
-            self.green_balloon.draw(image)
-            
-            self.red_balloon.draw(image)
+            self.balloon_bundle.draw(image)
             
             # draw score
             cv2.putText(image, str(self.score), (50,50), fontFace= cv2.FONT_HERSHEY_COMPLEX, fontScale = 1, color = GREEN, thickness = 2)
