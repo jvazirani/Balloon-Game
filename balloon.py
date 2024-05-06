@@ -6,6 +6,7 @@ import cv2
 import random
 import time
 import turtle  
+import pygame
 
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
@@ -28,7 +29,8 @@ class Balloon:
         self.count = 0
         self.temp = False
         self.respawn()
-    
+        self.image = pygame.image.load("balloon.py")
+
     def respawn(self):
         """
         Selects a random location on the screen to respawn
@@ -37,13 +39,14 @@ class Balloon:
         self.x = random.randint(self.x_start, self.x_end)
         self.count += 1
     
-    def draw(self, image):
+    def draw(self):
         """
         Enemy is drawn as a circle onto the image
 
         Args:
             image (Image): The image to draw the enemy onto
         """
-        cv2.circle(image, (self.x, self.y), 70, self.color, -1) 
-        cv2.line(image, (self.x, self.y), (self.x, self.y + 400), self.color, 10) 
+        # change because right now just drawing cirlce 
+        cv2.circle(self.image, (self.x, self.y), 70, self.color, -1) 
+        cv2.line(self.image, (self.x, self.y), (self.x, self.y + 400), self.color, 10) 
         # cv2.circle(image, (self.x, self.y), 25, self.color, 5)
