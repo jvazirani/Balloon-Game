@@ -26,12 +26,11 @@ class Balloonbundle:
 
     # def slow_speed():
     #     # if balloon popped
-            # adjust speed
+            # adjust spee
 
-
-    def draw(self):
+    def draw(self, image):
         for balloon in self.balloons:
-            balloon.draw()
+            balloon.draw(image)
         
 
 

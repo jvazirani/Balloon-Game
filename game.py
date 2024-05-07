@@ -14,10 +14,10 @@ import random
 import time 
 from balloon import Balloon 
 from balloonbundle import Balloonbundle
-
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
+class Color: 
+    RED = (255, 0, 0)
+    GREEN = (0, 255, 0)
+    BLUE = (0, 0, 255)
 
 # Library Constants
 BaseOptions = mp.tasks.BaseOptions
@@ -30,10 +30,12 @@ DrawingUtil = mp.solutions.drawing_utils
 class Game:
     def __init__(self):
         # Load game elements
+        self.balloons = []
+        self.initialize_balloons(4)
         self.score = 0
         self.level = 1  
         # TODO: Initialize the enemy
-
+        self.finger_radius = 25
         self.balloon_bundle = Balloonbundle(4)
         # Create the hand detector
         base_options = BaseOptions(model_asset_path='data/hand_landmarker.task')
@@ -44,6 +46,10 @@ class Game:
         # TODO: Load video
         self.video = cv2.VideoCapture(1)
 
+
+    def initialize_balloons(self, num_balloons): 
+        for i in range(num_balloons): 
+            self.balloons.append(Balloon(Color.RED))
 
     
     def draw_landmarks_on_hand(self, image, detection_result):
@@ -85,13 +91,17 @@ class Game:
             image (_type_): The image to draw on
 
         """
-        # is this right
-        x_intercept = finger_x < balloon.x + 10 and finger_x > balloon.x - 10
-        y_intercept = finger_y < balloon.y + 10 and finger_y > balloon.y - 10
-        if(x_intercept and y_intercept): 
+        # is this righ
+
+        x_balloon = balloon.x + balloon.radius
+        y_balloon = balloon.y + balloon.radius
+        x_finger = finger_x 
+        y_finger = finger_y
+
+        if (balloon.radius + self.finger_radius)**2 > (x_finger - x_balloon)**2 + (y_finger - y_balloon)**2:
+            return True
             # balloon.respawn()
-            self.score += 1
-            self.temp = True
+        return False
         
     def check_balloon_pop(self, image, detection_result):
         """
@@ -118,12 +128,18 @@ class Game:
             pixelCoord = DrawingUtil._normalized_to_pixel_coordinates(finger.x, finger.y, imageWidth, imageHeight)
             pixelCoord_thumb = DrawingUtil._normalized_to_pixel_coordinates(thumb.x, thumb.y, imageWidth, imageHeight)
 
+            safe_balloons = []
             
             if pixelCoord:
-                for balloon in self.balloon_bundle.balloons:
-                    cv2.circle(image, (balloon.x, balloon.y), 25, GREEN, 5)
-                    for balloon in self.balloon_bundle.balloons:
-                        self.check_balloon_intercept(balloon.x, balloon.y, balloon, image)
+                cv2.circle(image, (pixelCoord[0], pixelCoord[1]), self.finger_radius, Color.GREEN, 5)
+                for balloon in self.balloons:
+                    popped = self.check_balloon_intercept(pixelCoord[0], pixelCoord[1], balloon, image)
+                    if popped: 
+                        self.score +=1
+                    else: 
+                        safe_balloons.append(balloon) 
+                self.balloons = safe_balloons
+
 
             # if pixelCoord_thumb:
             #     cv2.circle(image, (pixelCoord_thumb[0], pixelCoord_thumb[1]), 25, RED, 5)
@@ -151,14 +167,17 @@ class Game:
             # Flip
             image = cv2.flip(image, 1)
 
-            # Draw the enemy on the image
-            self.balloon_bundle.draw(image)
+            for balloon in self.balloons:
+                balloon.move()
             
-            # draw score
-            cv2.putText(image, str(self.score), (50,50), fontFace= cv2.FONT_HERSHEY_COMPLEX, fontScale = 1, color = GREEN, thickness = 2)
             # Convert the image to a readable format and find the hands
             to_detect = mp.Image(image_format=mp.ImageFormat.SRGB, data=image)
             results = self.detector.detect(to_detect)
+            cv2.putText(image, str(self.score), (50,50), fontFace= cv2.FONT_HERSHEY_COMPLEX, fontScale = 1, color = Color.GREEN, thickness = 2)
+
+            # Draw the enemy on the image
+            for balloon in self.balloons: 
+                balloon.draw(image)
 
             self.check_balloon_pop(image, results)
             if(self.score == 10 and self.level == 0): 
