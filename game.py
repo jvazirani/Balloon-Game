@@ -1,5 +1,5 @@
 """
-A game where you try to get down safely by popping the balloons
+A game where you try to pop as many balloons as possible before they fly away into the sky
 
 @author: Jaya Vazirani
 @version: May 2024
