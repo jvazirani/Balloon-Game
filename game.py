@@ -56,6 +56,7 @@ class Game:
         self.background_image = pygame.transform.scale(self.background_image, (self.width, self.height))
 
         self.popper = pygame.image.load("pin.png")
+        self.popper = pygame.transform.scale(self.popper, (100, 100))
 
 
     def initialize_balloons(self, num_balloons): 

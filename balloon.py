@@ -19,14 +19,13 @@ class Balloon:
     """
     def __init__(self, color, screen_width=1920, screen_height=1080):
         self.color = color
-        self.screen_width = screen_width
-        self.screen_height = screen_height
         self.radius = 70
         # Ranges for where balloons can be 
         self.count = 0
         self.temp = False
         self.respawn()
         self.image = pygame.image.load("balloon.png")
+        self.image = pygame.transform.scale(self.image, (66, 156))
         self.rect = self.image.get_rect()
         self.dx = 0
         self.dy = -4
@@ -43,8 +42,8 @@ class Balloon:
     def move(self):
         self.x += self.dx
         self.y += self.dy
-        if self.x < 0 or self.x > self.screen_width - 132 or self.y < 0 or self.y >  self.screen_height - 312: 
-            self.respawn()
+        # if self.x < 0 or self.x > self.screen_width - 132 or self.y < 0 or self.y >  self.screen_height - 312: 
+        #     self.respawn()
     
     def draw(self, screen):
         """
