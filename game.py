@@ -10,7 +10,8 @@ import mediapipe as mp
 from mediapipe import solutions
 from mediapipe.framework.formats import landmark_pb2
 import cv2
-import random
+import pygame
+import sys
 import time 
 from balloon import Balloon 
 from balloonbundle import Balloonbundle
@@ -33,10 +34,8 @@ class Game:
         self.balloons = []
         self.initialize_balloons(4)
         self.score = 0
-        self.level = 1  
-        # TODO: Initialize the enemy
+        # cirlcle on fingers radius
         self.finger_radius = 25
-        self.balloon_bundle = Balloonbundle(4)
         # Create the hand detector
         base_options = BaseOptions(model_asset_path='data/hand_landmarker.task')
         options = HandLandmarkerOptions(base_options=base_options,
@@ -45,6 +44,18 @@ class Game:
 
         # TODO: Load video
         self.video = cv2.VideoCapture(1)
+
+        # Pygame stuff
+        pygame.init()
+        self.width, self.height = 800, 600
+        self.screen = pygame.display.set_mode((self.width, self.height))
+        pygame.display.set_caption("Balloon Game")
+        self.background_image = pygame.image.load("background.png")
+        self.background_rect = self.background_image.get_rect()
+        self.background_rect = self.background_rect.move((0, 0))  
+        self.background_image = pygame.transform.scale(self.background_image, (self.width, self.height))
+
+        self.popper = pygame.image.load("pin.png")
 
 
     def initialize_balloons(self, num_balloons): 
@@ -122,35 +133,19 @@ class Game:
             hand_landmarks = hand_landmarks_list[idx]
             # Get the coordinates of just the index finger 
             finger = hand_landmarks[HandLandmarkPoints.INDEX_FINGER_TIP.value]
-            thumb = hand_landmarks[HandLandmarkPoints.THUMB_TIP.value]
-
             # Map the coordinates back to screen dimesnions 
             pixelCoord = DrawingUtil._normalized_to_pixel_coordinates(finger.x, finger.y, imageWidth, imageHeight)
-            pixelCoord_thumb = DrawingUtil._normalized_to_pixel_coordinates(thumb.x, thumb.y, imageWidth, imageHeight)
-
             safe_balloons = []
-            
             if pixelCoord:
-                cv2.circle(image, (pixelCoord[0], pixelCoord[1]), self.finger_radius, Color.GREEN, 5)
+                # cv2.circle(image, (pixelCoord[0], pixelCoord[1]), self.finger_radius, Color.GREEN, 5)
+                self.screen.blit(self.popper, (pixelCoord[0], pixelCoord[1]))
                 for balloon in self.balloons:
                     popped = self.check_balloon_intercept(pixelCoord[0], pixelCoord[1], balloon, image)
                     if popped: 
                         self.score +=1
                     else: 
                         safe_balloons.append(balloon) 
-                self.balloons = safe_balloons
-
-
-            # if pixelCoord_thumb:
-            #     cv2.circle(image, (pixelCoord_thumb[0], pixelCoord_thumb[1]), 25, RED, 5)
-            #     self.check_balloon_intercept(pixelCoord_thumb[0], pixelCoord_thumb[1], self.red_balloon, image)
-
-            # elif (finger_intersect and thumb_intersect):
-            #     self.green_enemy.respawn()
-            #     self.red_enemy.respawn()
-
-            # THUMB_TIP
-            
+                self.balloons = safe_balloons      
     
     def run(self):
         """
@@ -158,7 +153,12 @@ class Game:
         user presses "q".
         """    
         # TODO: Modify loop condition  
-        while self.video.isOpened():
+        running = True
+        while self.video.isOpened() and running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
             # Get the current frame
             frame = self.video.read()[1]
 
@@ -167,33 +167,41 @@ class Game:
             # Flip
             image = cv2.flip(image, 1)
 
-            for balloon in self.balloons:
-                balloon.move()
             
             # Convert the image to a readable format and find the hands
             to_detect = mp.Image(image_format=mp.ImageFormat.SRGB, data=image)
             results = self.detector.detect(to_detect)
             cv2.putText(image, str(self.score), (50,50), fontFace= cv2.FONT_HERSHEY_COMPLEX, fontScale = 1, color = Color.GREEN, thickness = 2)
 
-            # Draw the enemy on the image
+            # Draw the balloon on the image
+            
+            self.screen.blit(self.background_image, self.background_rect)
+
             for balloon in self.balloons: 
-                balloon.draw(image)
+                balloon.draw(self.screen)
+
+            for balloon in self.balloons:
+                balloon.move()
 
             self.check_balloon_pop(image, results)
-            if(self.score == 10 and self.level == 0): 
-                curr_time = time.time()    
-                print(curr_time)
-                break
+
+            # Draw the balloon image on top of the background
+
+            # Update the display
+            pygame.display.flip()
 
             # Change the color of the frame back
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            cv2.imshow('Hand Tracking', image)
+            # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            # cv2.imshow('Hand Tracking', image)
             # Break the loop if the user presses 'q'
             if cv2.waitKey(50) & 0xFF == ord('q'):
                 print(self.score)
                 break
         self.video.release()
         cv2.destroyAllWindows()
+        # Fill the screen with the background image
+
+
 
 if __name__ == "__main__":        
     g = Game()
