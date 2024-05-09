@@ -1,10 +1,12 @@
 """
-A game where you try to pop as many balloons as possible before they fly away into the sky
+A game where you try to pop as many balloons as possible before they fly away into the sky and try to avoid obstacles
+to obtain the highest possible score
 
 @author: Jaya Vazirani
 @version: May 2024
 
-edited from: https://i-know-python.com/computer-vision-game-using-mediapipe-and-python/
+edited from: Finger Tracking Game
+Some code used from ChatGPT
 """
 # Imports
 import mediapipe as mp
@@ -15,6 +17,8 @@ import pygame
 import sys
 from balloon import Balloon 
 from obstacle import Obstacle
+
+FINGER_RADIUS = 25
 class Color: 
     RED = (255, 0, 0)
     GREEN = (0, 255, 0)
@@ -36,12 +40,12 @@ class Game:
         self.balloons = []
         self.initialize_balloons(50)
         self.obstacles = []
-        self.initialize_obstacles(5)
+        self.initialize_obstacles(15)
 
         # Initialize score
         self.score = 0
-        # cirlcle on fingers radius
-        self.finger_radius = 25
+        # circle around finger
+        self.finger_radius = FINGER_RADIUS
 
         # Create the hand detector
         base_options = BaseOptions(model_asset_path='data/hand_landmarker.task')
@@ -51,22 +55,20 @@ class Game:
 
         # Load video
         self.video = cv2.VideoCapture(1)
-
         # Pygame stuff
         pygame.init()
         self.width, self.height = 800, 600
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("Balloon Game")
+
+        # Set up background image
         self.background_image = pygame.image.load("background.png")
         self.background_rect = self.background_image.get_rect()
         self.background_rect = self.background_rect.move((0, 0))  
         self.background_image = pygame.transform.scale(self.background_image, (self.width, self.height))
-
         # Initialize popper image
         self.popper = pygame.image.load("pin.png")
         self.popper = pygame.transform.scale(self.popper, (100, 100))
-        self.explode = pygame.image.load("explode.png")
-
 
     def initialize_balloons(self, num_balloons): 
         for i in range(num_balloons): 
@@ -78,16 +80,15 @@ class Game:
 
     def display_neg_screen(self):
         explode = pygame.image.load("explode.png")
-        explode = pygame.transform.scale(explode, (self.width, self.height))  # Resize image
-        print("Image loaded successfully:", explode.get_rect())
-        # Display screen with giant -1
+        explode = pygame.transform.scale(explode, (self.width, self.height))
+        # Display an explosion and a giant -5 to signify the person has lost points
         self.screen.fill(Color.WHITE)
-        self.draw_text(str(-1), 'Arial', 30, Color.RED, self.screen, 50, 50) 
-        self.screen.blit(explode, (self.width/2 - explode.get_width()/2, self.height/2 - explode.get_height()/2))  # Center the image
+        self.screen.blit(explode, (self.width/2 - explode.get_width()/2, self.height/2 - explode.get_height()/2)) 
+        self.draw_text(str(-10), 'Arial', 100, Color.WHITE, self.screen, (self.width/2), (self.height/2)) 
         pygame.display.flip()
 
         # Wait for one second
-        pygame.time.delay(1000)  # 1000 milliseconds = 1 second
+        pygame.time.delay(1000) 
 
     
     def draw_landmarks_on_hand(self, image, detection_result):
@@ -121,41 +122,29 @@ class Game:
     def check_balloon_intercept(self, finger_x, finger_y, balloon, image):
         """
         Determines if the finger position overlaps with the 
-        enemy's position. Respawns and draws the enemy and 
-        increases the score accordingly.
+        ballons position and returns true or false accordingly
         """
         x_balloon = balloon.x + balloon.radius
         y_balloon = balloon.y + balloon.radius
-        x_finger = finger_x 
-        y_finger = finger_y
-        if (balloon.radius + self.finger_radius)**2 > (x_finger - x_balloon)**2 + (y_finger - y_balloon)**2:
+        if (balloon.radius + self.finger_radius)**2 > (finger_x - x_balloon)**2 + (finger_y - y_balloon)**2:
             return True
-            # balloon.respawn()
         return False
     def check_obstacle_intercept(self, ifinger_x, ifinger_y, obstacle, image):
         """
         Determines if the finger position overlaps with the 
-        enemy's position. Respawns and draws the enemy and 
-        increases the score accordingly.
+        obstacles position and returns true or false accordingly
         """
         x_obstacle = obstacle.x + obstacle.radius
         y_obstacle = obstacle.y + obstacle.radius
-        x_finger = ifinger_x 
-        y_finger = ifinger_y
-        if (obstacle.radius + self.finger_radius)**2 > (x_finger - x_obstacle)**2 + (y_finger - y_obstacle)**2:
-            print("obstacle colided")
+        if (obstacle.radius + self.finger_radius)**2 > (ifinger_x - x_obstacle)**2 + (ifinger_y - y_obstacle)**2:
             return True
-            # balloon.respawn()
         return False
         
     def check_balloon_pop(self, image, detection_result):
         """
-        Draws a green circle on the index finger 
+        Draws a pin on the index finger 
         and calls a method to check if we've intercepted
         with the enemy
-        Args:
-            image (Image): The image to draw on
-            detection_result (HandLandmarkerResult): HandLandmarker detection results
         """
         # Get image details
         imageHeight, imageWidth = image.shape[:2]
@@ -174,6 +163,8 @@ class Game:
             if pixelCoord:
                # Draws the popper image on screen
                 self.screen.blit(self.popper, (pixelCoord[0], pixelCoord[1]))
+
+                # Checks if balloon has intersected and only keeps the ones that haven't
                 for balloon in self.balloons:
                     popped = self.check_balloon_intercept(pixelCoord[0], pixelCoord[1], balloon, image)
                     if popped: 
@@ -182,12 +173,13 @@ class Game:
                         safe_balloons.append(balloon) 
                 self.balloons = safe_balloons 
 
+                # Checks if obstacles have intersected (does some additional stuff if does) and only keeps the ones that haven't
                 for obstacle in self.obstacles:
                     exploded = self.check_obstacle_intercept(pixelCoord[0], pixelCoord[1], obstacle, image)
                     if exploded: 
                         # We want to subtract score
-                        # We want to change the imag
-                        self.score = self.score - 1
+                        self.score = self.score - 10
+                        # We want to display a negative screen
                         self.display_neg_screen()
                     else: 
                         safe_obstacles.append(obstacle) 
@@ -200,11 +192,14 @@ class Game:
         text_rect.center = (x, y)
         surface.blit(text_obj, text_rect)
 
+    # Displays home screen before game starts
     def main_menu(self):
         while True:
             self.screen.fill(Color.WHITE)
-            self.draw_text("Welcome to Balloon slicer", 'Arial', 50, Color.GREEN, self.screen, self.width/2, self.height/3)
-            
+            self.draw_text("Welcome to Balloon Ninja", 'Georgia', 50, Color.BLUE, self.screen, self.width/2, self.height/3)
+            self.draw_text("Essentially, this game is like fruit ninja but with balloons instead of fruit.", 'Georgia', 20, Color.RED, self.screen, self.width/2, self.height -200)
+            self.draw_text("Try and pop the balloons to increase your score, but make sure to avoid the bombs!", 'Georgia', 20, Color.RED, self.screen, self.width/2, self.height -180)
+            self.draw_text("The highest score wins!", 'Georgia', 20, Color.RED, self.screen, self.width/2, self.height -160)
             # Draw Start Button
             start_button = pygame.Rect(300, 300, 200, 50)
             pygame.draw.rect(self.screen, Color.GREEN, start_button)
@@ -214,8 +209,9 @@ class Game:
             mouse_pos = pygame.mouse.get_pos()
             mouse_click = pygame.mouse.get_pressed()
 
+            # If mouse clicked
             if start_button.collidepoint(mouse_pos):
-                if mouse_click[0] == 1:  # Left mouse button clicked
+                if mouse_click[0] == 1: 
                     return
 
             for event in pygame.event.get():
