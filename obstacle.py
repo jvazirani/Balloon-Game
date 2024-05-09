@@ -1,32 +1,30 @@
-
 import mediapipe as mp
 from mediapipe import solutions
 from mediapipe.framework.formats import landmark_pb2
-import cv2
 import random
-import time
-import turtle  
 import pygame
 
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
-class Balloon:
+class Obstacle:
     """
     A class to represent a balloon that needs to be popped. It is represented by a cirle with a line 
     that is spawned within the boundries.
     """
     def __init__(self):
         self.radius = 70
-        # Ranges for where balloons can be 
         self.count = 0
-        self.temp = False
         self.respawn()
-        self.image = pygame.image.load("balloon.png")
-        self.image = pygame.transform.scale(self.image, (66, 156))
+        self.image = pygame.image.load("bomb.png")
+        self.image = pygame.transform.scale(self.image, (66, 66))
         self.dx = 0
         self.dy = -4
+
+    # def change_image(self):
+    #     self.image = pygame.image.load("explode.png")
+    #     self.image = pygame.transform.scale(self.image, (66, 66))
 
     def respawn(self):
         """
@@ -43,8 +41,6 @@ class Balloon:
         self.dx = random.randint(-5, 5)
         self.x += self.dx
         self.y += self.dy
-        if self.y < 0: 
-            score = score - 1
             # self.respawn()
     
     def draw(self, screen):

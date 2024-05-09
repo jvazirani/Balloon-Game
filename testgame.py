@@ -4,35 +4,40 @@ import sys
 # Initialize Pygame
 pygame.init()
 
-# Set up the window
-width, height = 800, 600
-screen = pygame.display.set_mode((width, height))
-pygame.display.set_caption("Balloon Game")
+# Set up screen dimensions
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("One Second Screen")
 
-# Load the background image
-background_image = pygame.image.load("background.png")  # Replace "background.jpg" with your background image path
-background_rect = background_image.get_rect()
-background_rect = background_rect.move((0, 0))  # Move the background rectangle to cover the entire screen
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
 
-# Load the balloon image
-balloon_image = pygame.image.load("balloon.png")  # Replace "balloon.png" with your balloon image path
-balloon_rect = balloon_image.get_rect()
-background_image = pygame.transform.scale(background_image, (width, height))
+# Fonts
+font = pygame.font.SysFont(None, 50)
 
-# Main loop
-running = True
-while running:
-    # Handle events
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-
-    # Fill the screen with the background image
-    screen.blit(background_image, background_rect)
-
-    # Draw the balloon image on top of the background
-    screen.blit(balloon_image, ((width - balloon_rect.width) // 2, (height - balloon_rect.height) // 2))
-
-    # Update the display
+def display_screen_for_one_second():
+    # Display screen
+    screen.fill(WHITE)
+    draw_text("Hello!", font, BLACK, screen, SCREEN_WIDTH/2, SCREEN_HEIGHT/2)
     pygame.display.flip()
+
+    # Wait for one second
+    pygame.time.delay(3000)  # 1000 milliseconds = 1 second
+
+def draw_text(text, font, color, surface, x, y):
+    text_obj = font.render(text, True, color)
+    text_rect = text_obj.get_rect()
+    text_rect.center = (x, y)
+    surface.blit(text_obj, text_rect)
+
+def main():
+    display_screen_for_one_second()
+
+    # Continue with your game logic or exit
+    pygame.quit()
+    sys.exit()
+
+if __name__ == "__main__":
+    main()
