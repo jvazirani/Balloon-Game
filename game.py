@@ -185,6 +185,7 @@ class Game:
                         safe_obstacles.append(obstacle) 
                 self.obstacles = safe_obstacles         
 
+    # Written by ChatGPT
     def draw_text(self, text, font_name, font_size, color, surface, x, y):
         font = pygame.font.SysFont(font_name, font_size)
         text_obj = font.render(text, True, color)
@@ -193,6 +194,7 @@ class Game:
         surface.blit(text_obj, text_rect)
 
     # Displays home screen before game starts
+    # Function written by ChatGPT
     def main_menu(self):
         while True:
             self.screen.fill(Color.WHITE)
@@ -253,7 +255,7 @@ class Game:
                 obstacle.move(self.score)
 
             # Draw score
-            self.draw_text(str(self.score), 'Arial', 30, Color.GREEN, self.screen, 50, 50) 
+            self.draw_text('score: ' + str(self.score), 'Arial', 50, Color.BLUE, self.screen, 100, 50) 
             self.check_balloon_pop(image, results)
 
             # Update the display
